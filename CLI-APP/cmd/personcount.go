@@ -16,6 +16,7 @@ var countCmd = &cobra.Command{
 	Additionally, the command may include options for sorting and filtering the results based on specific criteria, providing users with flexibility in analyzing person-count data`,
 	Run: func(cmd *cobra.Command, args []string) {
 		models.Gettitlewithcount( skip, limit, searchQuery, selects, order, orderBy)
+		
 	},
 }
 

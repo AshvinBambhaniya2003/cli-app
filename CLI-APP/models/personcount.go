@@ -1,30 +1,11 @@
 package models
 
 import (
-	"encoding/csv"
 	"fmt"
-	"os"
 	"strings"
 	"errors"
 	"sort"
 )
-
-type Title struct {
-	ID          string
-	Title       string
-	Type        string
-	Description string
-	ReleaseYear int
-}
-
-
-type Credit struct {
-	PersonID int
-	TitleID  string
-	Name     string
-	Character string
-	Role     string
-}
 
 type TitleCount struct {
 	Title string
@@ -35,6 +16,8 @@ var titlefilepath = "CSV/titles.csv"
 var creditfilepath = "CSV/credits.csv"
 
 func Gettitlewithcount(skip, limit int, searchQuery, selects, order, orderBy string) {
+
+
 	titles, err := readTitles(titlefilepath)
 	if err != nil {
 		fmt.Println("Error reading titles:", err)
@@ -84,95 +67,6 @@ func paginateTitles(titles []Title, skip, limit int) ([]Title, error) {
 	return titles[skip:end], nil
 }
 
-
-
-func readTitles(filename string) ([]Title, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	reader := csv.NewReader(file)
-
-	records, err := reader.ReadAll()
-	if err != nil {
-		return nil, err
-	}
-
-	var titles []Title
-	first := 1
-	for _, record := range records {
-		title := Title{
-			ID:          record[0],
-			Title:       record[1],
-			Type:        record[2],
-			Description: record[3],
-			ReleaseYear: parseYear(record[4]),
-		}
-		if (first == 1){
-			first++
-		}else{
-			titles = append(titles, title)
-		}
-		
-	}
-
-	return titles, nil
-}
-
-func readCredits(filename string) ([]Credit, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	reader := csv.NewReader(file)
-
-	records, err := reader.ReadAll()
-	if err != nil {
-		return nil, err
-	}
-
-	var credits []Credit
-	first := 1
-	for _, record := range records {
-		credit := Credit{
-			PersonID: parseInt(record[0]),
-			TitleID:  record[1],
-			Name:     record[2],
-			Character: strings.Trim(record[3], `"`),
-			Role:     record[4],
-		}
-		if (first == 1){
-			first++
-		}else{
-			credits = append(credits, credit)
-		}
-		
-	}
-
-	return credits, nil
-}
-
-func parseYear(yearStr string) int {
-	var year int
-	_, err := fmt.Sscanf(yearStr, "%d", &year)
-	if err != nil {
-		return 0
-	}
-	return year
-}
-
-func parseInt(str string) int {
-	var num int
-	_, err := fmt.Sscanf(str, "%d", &num)
-	if err != nil {
-		return 0
-	}
-	return num
-}
 
 func listAllTitlesWithPersonCount(titles []Title, credits []Credit, selects, order, orderBy string) {
 	
