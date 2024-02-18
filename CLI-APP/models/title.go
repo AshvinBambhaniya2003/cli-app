@@ -2,66 +2,29 @@ package models
 
 import (
 	"encoding/csv"
-	"fmt"
 	"os"
-	"strings"
+	"strconv"
 )
 
 type Title struct {
-	ID          string
-	Title       string
-	Type        string
-	Description string
-	ReleaseYear int
+	ID                  string
+	Title               string
+	Type                string
+	Description         string
+	ReleaseYear         int
+	AgeCertification    string
+	Runtime             int
+	Genres              []string
+	ProductionCountries []string
+	Seasons             int
+	IMDbID              string
+	IMDbScore           float64
+	IMDbVotes           int
+	TmdbPopularity      float64
+	TmdbScore           float64
 }
 
-type Credit struct {
-	PersonID int
-	TitleID  string
-	Name     string
-	Character string
-	Role     string
-}
-
-func Gettitlewithcount() {
-	titles, err := readTitles("titles.csv")
-	if err != nil {
-		fmt.Println("Error reading titles:", err)
-		return
-	}
-
-	credits, err := readCredits("credits.csv")
-	if err != nil {
-		fmt.Println("Error reading credits:", err)
-		return
-	}
-
-	listAllTitlesWithPersonCount(titles, credits)
-}
-
-func SearchTitles(search string) {
-
-	titles, err := readTitles("titles.csv")
-	if err != nil {
-		fmt.Println("Error reading titles:", err)
-		return
-	}
-
-	if search == "" {
-		fmt.Println(titles)
-	}
-
-	// var filteredTitles []Title
-	for _, title := range titles {
-		if strings.Contains(strings.ToLower(title.Title), strings.ToLower(search)) {
-			// filteredTitles = append(filteredTitles, title)
-			fmt.Println(title)
-		}
-	}
-
-}
-
-func readTitles(filename string) ([]Title, error) {
+func ReadTitles(filename string) ([]Title, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -69,7 +32,6 @@ func readTitles(filename string) ([]Title, error) {
 	defer file.Close()
 
 	reader := csv.NewReader(file)
-	// reader.FieldsPerRecord = -1 // Allow variable number of fields
 
 	records, err := reader.ReadAll()
 	if err != nil {
@@ -77,83 +39,59 @@ func readTitles(filename string) ([]Title, error) {
 	}
 
 	var titles []Title
+	first := true
+
 	for _, record := range records {
-		title := Title{
-			ID:          record[0],
-			Title:       record[1],
-			Type:        record[2],
-			Description: record[3],
-			ReleaseYear: parseYear(record[4]),
+		// Skip the header row
+		if first {
+			first = false
+			continue
 		}
+
+		title := Title{
+			ID:                  record[0],
+			Title:               record[1],
+			Type:                record[2],
+			Description:         record[3],
+			ReleaseYear:         parseYear(record[4]),
+			AgeCertification:    record[5],
+			Runtime:             parseYear(record[6]),
+			Genres:              []string{record[7]},
+			ProductionCountries: []string{record[8]},
+			Seasons:             parseYear(record[9]),
+			IMDbID:              record[10],
+			IMDbScore:           parseFloat(record[11]),
+			IMDbVotes:           parseInt(record[12]),
+			TmdbPopularity:      parseFloat(record[13]),
+			TmdbScore:           parseFloat(record[14]),
+		}
+
 		titles = append(titles, title)
 	}
 
 	return titles, nil
 }
 
-func readCredits(filename string) ([]Credit, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	reader := csv.NewReader(file)
-	reader.FieldsPerRecord = -1 // Allow variable number of fields
-
-	records, err := reader.ReadAll()
-	if err != nil {
-		return nil, err
-	}
-
-	var credits []Credit
-	for _, record := range records {
-		credit := Credit{
-			PersonID: parseInt(record[0]),
-			TitleID:  record[1],
-			Name:     record[2],
-			Character: strings.Trim(record[3], `"`),
-			Role:     record[4],
-		}
-		credits = append(credits, credit)
-	}
-
-	return credits, nil
-}
-
 func parseYear(yearStr string) int {
-	var year int
-	_, err := fmt.Sscanf(yearStr, "%d", &year)
+	year, err := strconv.Atoi(yearStr)
 	if err != nil {
 		return 0
 	}
 	return year
 }
 
-func parseInt(str string) int {
-	var num int
-	_, err := fmt.Sscanf(str, "%d", &num)
+func parseFloat(value string) float64 {
+	result, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		return 0
 	}
-	return num
+	return result
 }
 
-func listAllTitlesWithPersonCount(titles []Title, credits []Credit) {
-	fmt.Println("Title,Person(s) Count")
-	for _, title := range titles {
-		count := countPersonsForTitle(title.ID, credits)
-		fmt.Printf("%s,%d\n", title.Title, count)
+func parseInt(value string) int {
+	result, err := strconv.Atoi(value)
+	if err != nil {
+		return 0
 	}
+	return result
 }
-
-func countPersonsForTitle(titleID string, credits []Credit) int {
-	count := 0
-	for _, credit := range credits {
-		if credit.TitleID == titleID {
-			count++
-		}
-	}
-	return count
-}
-
